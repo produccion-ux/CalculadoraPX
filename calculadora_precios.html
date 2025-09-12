@@ -14,13 +14,17 @@
     <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <!-- ... (Todo el contenido de tu calculadora va aquí, no ha cambiado) ... -->
     <div class="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
+        <!-- Encabezado -->
         <div class="text-center">
             <h1 class="text-3xl font-bold text-cyan-400">Calculadora de Precios</h1>
             <p class="text-gray-400 mt-2">Ingresa los datos de la pieza para obtener el costo.</p>
         </div>
+        <!-- Panel de Controles -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-4">
+             <div class="space-y-4">
                 <div>
                     <label for="thickness" class="block text-sm font-medium text-gray-300 mb-2">Espesor del Material</label>
                     <select id="thickness" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition">
@@ -51,7 +55,7 @@
                     </div>
                     <div class="flex items-center">
                         <input id="colors" type="checkbox" class="h-4 w-4 rounded border-gray-500 bg-gray-700 text-cyan-600 focus:ring-cyan-500">
-                        <label for="colors" class="ml-3 block text-sm text-gray-300">Colores</label>
+                        <label for="colors" class="ml-3 block text-sm text-gray-300">Colores (Cristal y Opal)</label>
                     </div>
                 </div>
             </div>
@@ -66,16 +70,55 @@
             </div>
         </div>
     </div>
+
+    <!-- INICIO: CÓDIGO NUEVO - Notificación de Actualización -->
+    <div id="update-notification" class="hidden fixed bottom-4 right-4 bg-cyan-600 text-white py-3 px-5 rounded-lg shadow-lg flex items-center gap-4">
+        <p>Hay una nueva versión disponible.</p>
+        <button id="reload-button" class="bg-white text-cyan-700 font-bold py-1 px-3 rounded-md hover:bg-gray-200 transition">Actualizar</button>
+    </div>
+    <!-- FIN: CÓDIGO NUEVO -->
+
     <script>
-        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('service-worker.js').then(reg=>console.log('SW registrado')).catch(err=>console.log('SW no registrado', err)); }); }
-        const priceData={'2mm':{'Rectos':12,'Corte laser simple':16.5,'Complejo':18,'pulido':1.2,'colores':1.5},'3mm':{'Rectos':16,'Corte laser simple':20.5,'Complejo':23,'pulido':1.2,'colores':1.5},'4mm':{'Rectos':18.5,'Corte laser simple':21,'Complejo':25,'pulido':1.2,'colores':1.5},'5mm':{'Rectos':19,'Corte laser simple':22,'Complejo':26,'pulido':1.2,'colores':1.5},'6mm':{'Rectos':25.5,'Corte laser simple':30,'Complejo':34,'pulido':1.2,'colores':1.5},'8mm':{'Rectos':33.5,'Corte laser simple':40,'Complejo':46,'pulido':1.2,'colores':1.5},'10mm':{'Rectos':39,'Corte laser simple':46.8,'Complejo':49.5,'pulido':1.2,'colores':1.5}};
+        // --- Lógica de la calculadora (sin cambios) ---
+        const priceData={'2mm':{'Rectos':11.5,'Corte laser simple':16.5,'Complejo':18,'pulido':1.2,'colores':1.5},'3mm':{'Rectos':16,'Corte laser simple':20.5,'Complejo':23,'pulido':1.2,'colores':1.5},'4mm':{'Rectos':18.5,'Corte laser simple':21,'Complejo':25,'pulido':1.2,'colores':1.5},'5mm':{'Rectos':19,'Corte laser simple':22,'Complejo':26,'pulido':1.2,'colores':1.5},'6mm':{'Rectos':25.5,'Corte laser simple':30,'Complejo':34,'pulido':1.2,'colores':1.5},'8mm':{'Rectos':33.5,'Corte laser simple':40,'Complejo':46,'pulido':1.2,'colores':1.5},'10mm':{'Rectos':39,'Corte laser simple':46.8,'Complejo':49.5,'pulido':1.2,'colores':1.5}};
         const thicknessEl=document.getElementById('thickness'),widthEl=document.getElementById('width'),heightEl=document.getElementById('height'),cutTypeEl=document.getElementById('cutType'),polishedEl=document.getElementById('polished'),colorsEl=document.getElementById('colors'),resultAreaEl=document.getElementById('resultArea'),resultPricePerCmEl=document.getElementById('resultPricePerCm'),resultTotalPriceEl=document.getElementById('resultTotalPrice');
         function calculatePrice(){const thickness=thicknessEl.value,width=parseFloat(widthEl.value)||0,height=parseFloat(heightEl.value)||0,cutType=cutTypeEl.value,isPolished=polishedEl.checked,hasColors=colorsEl.checked;if(!priceData[thickness])return;const prices=priceData[thickness];let pricePerCm=prices[cutType]||0;if(isPolished){pricePerCm+=prices.pulido}if(hasColors){pricePerCm+=prices.colores}const area=width*height,totalPrice=area*pricePerCm,currencyFormatter=new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:2});resultAreaEl.textContent=area.toLocaleString('es-CO');resultPricePerCmEl.textContent=currencyFormatter.format(pricePerCm);resultTotalPriceEl.textContent=currencyFormatter.format(totalPrice)}
         const inputs=[thicknessEl,widthEl,heightEl,cutTypeEl,polishedEl,colorsEl];inputs.forEach(input=>input.addEventListener('input',calculatePrice));window.addEventListener('load',calculatePrice);
     </script>
+
+    <!-- INICIO: CÓDIGO NUEVO - Lógica de Actualización -->
+    <script>
+      let newWorker;
+
+      function showUpdateBar() {
+        const notification = document.getElementById('update-notification');
+        notification.classList.remove('hidden');
+      }
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js').then(reg => {
+          reg.addEventListener('updatefound', () => {
+            // Se encontró un nuevo service worker, está en proceso de instalación.
+            newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              // El estado del nuevo worker cambió
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // El nuevo worker está instalado y listo para tomar el control.
+                // ¡Mostramos la notificación!
+                showUpdateBar();
+              }
+            });
+          });
+        });
+      }
+
+      const reloadButton = document.getElementById('reload-button');
+      reloadButton.addEventListener('click', () => {
+        // Al hacer clic, le decimos al nuevo worker que se active y recargamos la página.
+        newWorker.postMessage({ action: 'skipWaiting' });
+        window.location.reload();
+      });
+    </script>
+    <!-- FIN: CÓDIGO NUEVO -->
 </body>
 </html>
-
-
-
-
