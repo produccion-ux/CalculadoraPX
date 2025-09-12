@@ -1,0 +1,25 @@
+{
+  "short_name": "Calc Precios",
+  "name": "Calculadora de Precios",
+  "description": "Una calculadora simple para precios de piezas.",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/111827/7dd3fc?text=Calc",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://placehold.co/512x512/111827/7dd3fc?text=Calc",
+      "type": "image/png",
+      "sizes": "512x512",
+       "purpose": "any maskable"
+    }
+  ],
+  "start_url": "calculadora_precios.html",
+  "background_color": "#111827",
+  "display": "standalone",
+  "scope": ".",
+  "theme_color": "#111827"
+}
+
