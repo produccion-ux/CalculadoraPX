@@ -1,5 +1,5 @@
 {
-  "short_name": "Calc Precios",
+  "short_name": "Precios PX",
   "name": "Calculadora de Precios",
   "description": "Una calculadora simple para precios de piezas.",
   "icons": [
@@ -22,5 +22,6 @@
   "scope": ".",
   "theme_color": "#111827"
 }
+
 
 
