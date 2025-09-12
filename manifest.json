@@ -4,13 +4,13 @@
   "description": "Una calculadora simple para precios de piezas.",
   "icons": [
     {
-      "src": "https://placehold.co/192x192/111827/7dd3fc?text=Calc",
+      "src": "LOGO.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "https://placehold.co/512x512/111827/7dd3fc?text=Calc",
+      "src": "LOGO.png",
       "type": "image/png",
       "sizes": "512x512",
        "purpose": "any maskable"
@@ -22,4 +22,5 @@
   "scope": ".",
   "theme_color": "#111827"
 }
+
 
