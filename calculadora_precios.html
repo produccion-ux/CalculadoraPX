@@ -3,125 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRECIOS PX</title>
+    <title>Calculadora de Precios</title>
     <meta name="theme-color" content="#111827"/>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="LOGO.png">
+    <link rel="apple-touch-icon" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
 
-    <!-- ... (Todo el contenido de tu calculadora va aquí, no ha cambiado) ... -->
     <div class="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
-        <!-- Encabezado -->
         <div class="text-center">
-            <h1 class="text-3xl font-bold text-cyan-400">PRECIOS PX</h1>
-            <p class="text-gray-400 mt-2">Ingresa los datos de la pieza</p>
+            <h1 class="text-3xl font-bold text-cyan-400">Calculadora de Precios</h1>
+            <p class="text-gray-400 mt-2">Ingresa los datos de la pieza para obtener el costo.</p>
         </div>
-        <!-- Panel de Controles -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div class="space-y-4">
-                <div>
-                    <label for="thickness" class="block text-sm font-medium text-gray-300 mb-2">Espesor del Material</label>
-                    <select id="thickness" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition">
-                        <option>2mm</option><option>3mm</option><option selected>4mm</option><option>5mm</option><option>6mm</option><option>8mm</option><option>10mm</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="width" class="block text-sm font-medium text-gray-300 mb-2">Ancho (cm)</label>
-                    <input type="number" id="width" value="15" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition" placeholder="Ej: 15">
-                </div>
-                <div>
-                    <label for="height" class="block text-sm font-medium text-gray-300 mb-2">Alto (cm)</label>
-                    <input type="number" id="height" value="140" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition" placeholder="Ej: 140">
-                </div>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label for="cutType" class="block text-sm font-medium text-gray-300 mb-2">Tipo de Corte</label>
-                    <select id="cutType" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition">
-                        <option>Rectos</option><option>Corte laser simple</option><option>Complejo</option>
-                    </select>
-                </div>
-                <div class="pt-5 space-y-3">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Acabados Adicionales</label>
-                    <div class="flex items-center">
-                        <input id="polished" type="checkbox" class="h-4 w-4 rounded border-gray-500 bg-gray-700 text-cyan-600 focus:ring-cyan-500">
-                        <label for="polished" class="ml-3 block text-sm text-gray-300">Pulido y Brillado</label>
+
+        <!-- Estado de Carga -->
+        <div id="loading-state" class="text-center py-10">
+            <p class="text-cyan-400">Cargando precios desde la base de datos...</p>
+        </div>
+
+        <!-- Contenido de la Calculadora (inicialmente oculto) -->
+        <fieldset id="calculator-content" class="disabled:opacity-40" disabled>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label for="thickness" class="block text-sm font-medium text-gray-300 mb-2">Espesor del Material</label>
+                        <select id="thickness" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition"></select>
                     </div>
-                    <div class="flex items-center">
-                        <input id="colors" type="checkbox" class="h-4 w-4 rounded border-gray-500 bg-gray-700 text-cyan-600 focus:ring-cyan-500">
-                        <label for="colors" class="ml-3 block text-sm text-gray-300">Acrilico de colores</label>
+                    <div>
+                        <label for="width" class="block text-sm font-medium text-gray-300 mb-2">Ancho (cm)</label>
+                        <input type="number" id="width" value="15" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition" placeholder="Ej: 15">
+                    </div>
+                    <div>
+                        <label for="height" class="block text-sm font-medium text-gray-300 mb-2">Alto (cm)</label>
+                        <input type="number" id="height" value="140" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition" placeholder="Ej: 140">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="cutType" class="block text-sm font-medium text-gray-300 mb-2">Tipo de Corte</label>
+                        <select id="cutType" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500 transition"></select>
+                    </div>
+                    <div id="finishes-container" class="pt-5 space-y-3">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Acabados Adicionales</label>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="border-t border-gray-700"></div>
-        <div class="bg-gray-900/50 rounded-lg p-6 space-y-4">
-            <h2 class="text-xl font-semibold text-center text-cyan-400">Resultado del Cálculo</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                <div><p class="text-sm text-gray-400">Área (cm²)</p><p id="resultArea" class="text-2xl font-semibold">0</p></div>
-                <div><p class="text-sm text-gray-400">Precio / cm²</p><p id="resultPricePerCm" class="text-2xl font-semibold">$0.00</p></div>
-                <div class="bg-cyan-500/10 rounded-lg p-2"><p class="text-sm text-cyan-300">Precio Total</p><p id="resultTotalPrice" class="text-3xl font-bold text-cyan-400">$0.00</p></div>
+            <div class="border-t border-gray-700 mt-6"></div>
+            <div class="bg-gray-900/50 rounded-lg p-6 space-y-4 mt-6">
+                <h2 class="text-xl font-semibold text-center text-cyan-400">Resultado del Cálculo</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div><p class="text-sm text-gray-400">Área (cm²)</p><p id="resultArea" class="text-2xl font-semibold">0</p></div>
+                    <div><p class="text-sm text-gray-400">Precio / cm²</p><p id="resultPricePerCm" class="text-2xl font-semibold">$0.00</p></div>
+                    <div class="bg-cyan-500/10 rounded-lg p-2"><p class="text-sm text-cyan-300">Precio Total</p><p id="resultTotalPrice" class="text-3xl font-bold text-cyan-400">$0.00</p></div>
+                </div>
             </div>
-        </div>
+        </fieldset>
     </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    <!-- INICIO: CÓDIGO NUEVO - Notificación de Actualización -->
-    <div id="update-notification" class="hidden fixed bottom-4 right-4 bg-cyan-600 text-white py-3 px-5 rounded-lg shadow-lg flex items-center gap-4">
-        <p>Hay una nueva versión disponible.</p>
-        <button id="reload-button" class="bg-white text-cyan-700 font-bold py-1 px-3 rounded-md hover:bg-gray-200 transition">Actualizar</button>
-    </div>
-    <!-- FIN: CÓDIGO NUEVO -->
+        const loadingStateEl = document.getElementById('loading-state');
+        const calculatorContentEl = document.getElementById('calculator-content');
+        const thicknessEl=document.getElementById('thickness'),widthEl=document.getElementById('width'),heightEl=document.getElementById('height'),cutTypeEl=document.getElementById('cutType'),finishesContainerEl=document.getElementById('finishes-container'),resultAreaEl=document.getElementById('resultArea'),resultPricePerCmEl=document.getElementById('resultPricePerCm'),resultTotalPriceEl=document.getElementById('resultTotalPrice');
 
-    <script>
-        // --- Lógica de la calculadora (sin cambios) ---
-        const priceData={'2mm':{'Rectos':12,'Corte laser simple':16.5,'Complejo':18,'pulido':1.2,'colores':1.5},'3mm':{'Rectos':16,'Corte laser simple':20.5,'Complejo':23,'pulido':1.2,'colores':1.5},'4mm':{'Rectos':18.5,'Corte laser simple':21,'Complejo':25,'pulido':1.2,'colores':1.5},'5mm':{'Rectos':19,'Corte laser simple':22,'Complejo':26,'pulido':1.2,'colores':1.5},'6mm':{'Rectos':25.5,'Corte laser simple':30,'Complejo':34,'pulido':1.2,'colores':1.5},'8mm':{'Rectos':33.5,'Corte laser simple':40,'Complejo':46,'pulido':1.2,'colores':1.5},'10mm':{'Rectos':39,'Corte laser simple':46.8,'Complejo':49.5,'pulido':1.2,'colores':1.5}};
-        const thicknessEl=document.getElementById('thickness'),widthEl=document.getElementById('width'),heightEl=document.getElementById('height'),cutTypeEl=document.getElementById('cutType'),polishedEl=document.getElementById('polished'),colorsEl=document.getElementById('colors'),resultAreaEl=document.getElementById('resultArea'),resultPricePerCmEl=document.getElementById('resultPricePerCm'),resultTotalPriceEl=document.getElementById('resultTotalPrice');
-        function calculatePrice(){const thickness=thicknessEl.value,width=parseFloat(widthEl.value)||0,height=parseFloat(heightEl.value)||0,cutType=cutTypeEl.value,isPolished=polishedEl.checked,hasColors=colorsEl.checked;if(!priceData[thickness])return;const prices=priceData[thickness];let pricePerCm=prices[cutType]||0;if(isPolished){pricePerCm+=prices.pulido}if(hasColors){pricePerCm+=prices.colores}const area=width*height,totalPrice=area*pricePerCm,currencyFormatter=new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:2});resultAreaEl.textContent=area.toLocaleString('es-CO');resultPricePerCmEl.textContent=currencyFormatter.format(pricePerCm);resultTotalPriceEl.textContent=currencyFormatter.format(totalPrice)}
-        const inputs=[thicknessEl,widthEl,heightEl,cutTypeEl,polishedEl,colorsEl];inputs.forEach(input=>input.addEventListener('input',calculatePrice));window.addEventListener('load',calculatePrice);
-    </script>
+        let priceData = {};
 
-    <!-- INICIO: CÓDIGO NUEVO - Lógica de Actualización -->
-    <script>
-      let newWorker;
-
-      function showUpdateBar() {
-        const notification = document.getElementById('update-notification');
-        notification.classList.remove('hidden');
-      }
-
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js').then(reg => {
-          reg.addEventListener('updatefound', () => {
-            // Se encontró un nuevo service worker, está en proceso de instalación.
-            newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-              // El estado del nuevo worker cambió
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // El nuevo worker está instalado y listo para tomar el control.
-                // ¡Mostramos la notificación!
-                showUpdateBar();
-              }
+        function calculatePrice() {
+            if (Object.keys(priceData).length === 0) return;
+            const thickness = thicknessEl.value, width = parseFloat(widthEl.value) || 0, height = parseFloat(heightEl.value) || 0, cutType = cutTypeEl.value;
+            if (!priceData[thickness] || !priceData[thickness][cutType]) return;
+            let pricePerCm = parseFloat(priceData[thickness][cutType]) || 0;
+            const finishCheckboxes = finishesContainerEl.querySelectorAll('input[type="checkbox"]');
+            finishCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) pricePerCm += parseFloat(priceData[thickness][checkbox.id]) || 0;
             });
-          });
-        });
-      }
+            const area = width * height, totalPrice = area * pricePerCm;
+            const currencyFormatter = new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 2});
+            resultAreaEl.textContent = area.toLocaleString('es-CO');
+            resultPricePerCmEl.textContent = currencyFormatter.format(pricePerCm);
+            resultTotalPriceEl.textContent = currencyFormatter.format(totalPrice);
+        }
 
-      const reloadButton = document.getElementById('reload-button');
-      reloadButton.addEventListener('click', () => {
-        // Al hacer clic, le decimos al nuevo worker que se active y recargamos la página.
-        newWorker.postMessage({ action: 'skipWaiting' });
-        window.location.reload();
-      });
+        function populateUI() {
+            const thicknesses = Object.keys(priceData);
+            if(thicknesses.length === 0) return;
+            thicknessEl.innerHTML = thicknesses.map(t => `<option>${t}</option>`).join('');
+            
+            function updateDynamicOptions() {
+                const selectedThickness = thicknessEl.value, thicknessData = priceData[selectedThickness];
+                if (!thicknessData) return;
+                const cuts = [], finishes = {};
+                Object.keys(thicknessData).forEach(key => {
+                    if (key.toLowerCase().includes('corte') || key.toLowerCase().includes('rectos')) cuts.push(key);
+                    else finishes[key] = thicknessData[key];
+                });
+                cutTypeEl.innerHTML = cuts.map(c => `<option>${c}</option>`).join('');
+                finishesContainerEl.innerHTML = `<label class="block text-sm font-medium text-gray-300 mb-2">Acabados Adicionales</label>`;
+                Object.keys(finishes).forEach(finishKey => {
+                    const finishName = finishKey.charAt(0).toUpperCase() + finishKey.slice(1).replace(/_/g, ' ');
+                    finishesContainerEl.innerHTML += `<div class="flex items-center"><input id="${finishKey}" type="checkbox" class="h-4 w-4 rounded border-gray-500 bg-gray-700 text-cyan-600 focus:ring-cyan-500"><label for="${finishKey}" class="ml-3 block text-sm text-gray-300">${finishName}</label></div>`;
+                });
+                attachEventListeners();
+                calculatePrice();
+            }
+            thicknessEl.removeEventListener('change', updateDynamicOptions);
+            thicknessEl.addEventListener('change', updateDynamicOptions);
+            updateDynamicOptions();
+        }
+
+        function attachEventListeners() {
+            const inputs = [widthEl, heightEl, cutTypeEl, thicknessEl, ...finishesContainerEl.querySelectorAll('input')];
+            inputs.forEach(input => {
+                input.removeEventListener('input', calculatePrice);
+                input.addEventListener('input', calculatePrice);
+            });
+        }
+
+        async function connectToFirestore() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                else await signInAnonymously(auth);
+                const priceDocRef = doc(db, `artifacts/${appId}/public/data/pricing`, "mainPrices");
+                onSnapshot(priceDocRef, (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().data) {
+                        priceData = docSnap.data().data;
+                        loadingStateEl.style.display = 'none';
+                        calculatorContentEl.disabled = false;
+                        populateUI();
+                    } else {
+                        loadingStateEl.innerHTML = `<p class="text-red-400">Error: No se encontraron los datos de precios. Por favor, configúrelos en el panel de administración.</p>`;
+                    }
+                }, (error) => {
+                    console.error("Error al escuchar los datos de precios: ", error);
+                    loadingStateEl.innerHTML = `<p class="text-red-400">Error de conexión con la base de datos.</p>`;
+                });
+            } catch (error) {
+                console.error("Error de autenticación: ", error);
+                loadingStateEl.innerHTML = `<p class="text-red-400">Error de autenticación con la base de datos.</p>`;
+            }
+        }
+        connectToFirestore();
     </script>
-    <!-- FIN: CÓDIGO NUEVO -->
 </body>
 </html>
-
-
-
