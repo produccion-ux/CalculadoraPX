@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin de Precios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-cyan-400">Panel de Administración de Precios</h1>
+            <p class="text-gray-400 mt-2">Modifica los valores y guarda los cambios.</p>
+        </div>
+
+        <div id="loading-state" class="text-center py-10">
+            <p class="text-cyan-400">Cargando precios desde la base de datos...</p>
+        </div>
+
+        <div id="admin-content" class="hidden">
+            <div id="prices-form" class="space-y-6">
+                <!-- Los campos del formulario se generarán aquí dinámicamente -->
+            </div>
+            <div class="mt-8 text-center">
+                <button id="save-button" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition">Guardar Cambios</button>
+                <p id="feedback-message" class="mt-4 text-green-400 h-6"></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const loadingStateEl = document.getElementById('loading-state');
+        const adminContentEl = document.getElementById('admin-content');
+        const pricesFormEl = document.getElementById('prices-form');
+        const saveButton = document.getElementById('save-button');
+        const feedbackMessageEl = document.getElementById('feedback-message');
+        
+        const defaultPrices = {'2mm':{'Rectos':11.5,'Corte_laser_simple':16.5,'Complejo':18,'Pulido_y_Brillado':1.2,'Colores':1.5},'3mm':{'Rectos':16,'Corte_laser_simple':20.5,'Complejo':23,'Pulido_y_Brillado':1.2,'Colores':1.5},'4mm':{'Rectos':18.5,'Corte_laser_simple':21,'Complejo':25,'Pulido_y_Brillado':1.2,'Colores':1.5}};
+
+        function renderForm(priceData) {
+            pricesFormEl.innerHTML = '';
+            for (const thickness in priceData) {
+                let fieldsHtml = '';
+                for (const key in priceData[thickness]) {
+                    const label = key.replace(/_/g, ' ');
+                    fieldsHtml += `<div class="flex-1 min-w-[120px]"><label for="${thickness}-${key}" class="block text-sm font-medium text-gray-400 mb-1 capitalize">${label}</label><input type="number" step="0.01" id="${thickness}-${key}" value="${priceData[thickness][key]}" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500"></div>`;
+                }
+                pricesFormEl.innerHTML += `<div class="bg-gray-800 p-4 rounded-lg"><h3 class="text-xl font-semibold mb-4 text-white">${thickness}</h3><div class="flex flex-wrap gap-4">${fieldsHtml}</div></div>`;
+            }
+        }
+        
+        async function loadPrices() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                else await signInAnonymously(auth);
+                const priceDocRef = doc(db, `artifacts/${appId}/public/data/pricing`, "mainPrices");
+                const docSnap = await getDoc(priceDocRef);
+                let currentPrices;
+                if (docSnap.exists() && docSnap.data().data) {
+                    currentPrices = docSnap.data().data;
+                } else {
+                    feedbackMessageEl.textContent = "No se encontraron precios. Creando una tabla con datos de ejemplo.";
+                    await setDoc(priceDocRef, { data: defaultPrices });
+                    currentPrices = defaultPrices;
+                }
+                renderForm(currentPrices);
+                loadingStateEl.style.display = 'none';
+                adminContentEl.classList.remove('hidden');
+            } catch (error) {
+                console.error("Error al cargar los precios: ", error);
+                loadingStateEl.innerHTML = `<p class="text-red-400">Error al conectar con la base de datos.</p>`;
+            }
+        }
+
+        saveButton.addEventListener('click', async () => {
+            saveButton.disabled = true;
+            feedbackMessageEl.textContent = 'Guardando...';
+            const newPriceData = {};
+            const inputs = pricesFormEl.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                const [thickness, key] = input.id.split('-');
+                if (!newPriceData[thickness]) newPriceData[thickness] = {};
+                newPriceData[thickness][key] = parseFloat(input.value);
+            });
+            try {
+                const priceDocRef = doc(db, `artifacts/${appId}/public/data/pricing`, "mainPrices");
+                await setDoc(priceDocRef, { data: newPriceData });
+                feedbackMessageEl.textContent = '¡Precios actualizados correctamente!';
+            } catch (error) {
+                console.error("Error al guardar: ", error);
+                feedbackMessageEl.textContent = 'Error al guardar los cambios.';
+            } finally {
+                saveButton.disabled = false;
+                setTimeout(() => feedbackMessageEl.textContent = '', 3000);
+            }
+        });
+        loadPrices();
+    </script>
+</body>
+</html>
