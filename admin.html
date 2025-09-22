@@ -74,7 +74,7 @@ const db = getFirestore(app);
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
                 else await signInAnonymously(auth);
-                const priceDocRef = doc(db, `artifacts/${appId}/public/data/pricing`, "mainPrices");
+                const priceDocRef = doc(db, "pricing", "mainPrices");
                 const docSnap = await getDoc(priceDocRef);
                 let currentPrices;
                 if (docSnap.exists() && docSnap.data().data) {
@@ -119,4 +119,5 @@ const db = getFirestore(app);
     </script>
 </body>
 </html>
+
 
