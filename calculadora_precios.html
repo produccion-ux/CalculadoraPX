@@ -68,11 +68,22 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // --- CÓDIGO NUEVO (PEGAR ESTO) ---
+
+// Pega aquí las credenciales que copiaste de Firebase en la Fase 2
+const firebaseConfig = {
+  apiKey: "AIzaSyAFTtJkt8I3-lkqGLETx3aDcX-NYvnqpng",
+  authDomain: "bd-precios.firebaseapp.com",
+  projectId: "bd-precios",
+  storageBucket: "bd-precios.firebasestorage.app",
+  messagingSenderId: "72521816580",
+  appId: "1:72521816580:web:cbe86a5935fbbe1bbfb351",
+};
+
+// El resto del código inicializa Firebase con tus credenciales reales
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
         const loadingStateEl = document.getElementById('loading-state');
         const calculatorContentEl = document.getElementById('calculator-content');
@@ -158,3 +169,4 @@
     </script>
 </body>
 </html>
+
