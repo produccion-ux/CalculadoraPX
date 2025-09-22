@@ -19,13 +19,11 @@
             <p class="text-gray-400 mt-2">Ingresa los datos de la pieza para obtener el costo.</p>
         </div>
 
-        <!-- Estado de Carga -->
         <div id="loading-state" class="text-center py-10">
             <p class="text-cyan-400">Cargando precios desde la base de datos...</p>
         </div>
 
-        <!-- Contenido de la Calculadora (inicialmente oculto) -->
-        <fieldset id="calculator-content" class="disabled:opacity-40" disabled>
+        <fieldset id="calculator-content" class="disabled:opacity-40 hidden" disabled>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-4">
                     <div>
@@ -63,27 +61,14 @@
         </fieldset>
     </div>
     
+    <script src="/__/firebase/10.12.2/firebase-app-compat.js"></script>
+    <script src="/__/firebase/10.12.2/firebase-auth-compat.js"></script>
+    <script src="/__/firebase/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="/__/firebase/init.js"></script>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // --- CÓDIGO NUEVO (PEGAR ESTO) ---
-
-
-        const firebaseConfig = {
-          apiKey: "AIzaSyAFTtJkt8I3-lkqGLETx3aDcX-NYvnqpng",
-          authDomain: "bd-precios.firebaseapp.com",
-          projectId: "bd-precios",
-          storageBucket: "bd-precios.firebasestorage.app",
-          messagingSenderId: "72521816580",
-          appId: "1:72521816580:web:cbe86a5935fbbe1bbfb351",
-            };
-
-        // El resto del código inicializa Firebase con tus credenciales reales
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
         const loadingStateEl = document.getElementById('loading-state');
         const calculatorContentEl = document.getElementById('calculator-content');
@@ -101,7 +86,7 @@
                 if (checkbox.checked) pricePerCm += parseFloat(priceData[thickness][checkbox.id]) || 0;
             });
             const area = width * height, totalPrice = area * pricePerCm;
-            const currencyFormatter = new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 2});
+            const currencyFormatter = new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0});
             resultAreaEl.textContent = area.toLocaleString('es-CO');
             resultPricePerCmEl.textContent = currencyFormatter.format(pricePerCm);
             resultTotalPriceEl.textContent = currencyFormatter.format(totalPrice);
@@ -144,17 +129,17 @@
 
         async function connectToFirestore() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                else await signInAnonymously(auth);
-                const priceDocRef = doc(db, "pricing", "mainPrices");
-                onSnapshot(priceDocRef, (docSnap) => {
-                    if (docSnap.exists() && docSnap.data().data) {
+                await auth.signInAnonymously();
+                const priceDocRef = db.collection("pricing").doc("mainPrices");
+                priceDocRef.onSnapshot((docSnap) => {
+                    if (docSnap.exists && docSnap.data().data) {
                         priceData = docSnap.data().data;
                         loadingStateEl.style.display = 'none';
+                        calculatorContentEl.classList.remove('hidden');
                         calculatorContentEl.disabled = false;
                         populateUI();
                     } else {
-                        loadingStateEl.innerHTML = `<p class="text-red-400">Error: No se encontraron los datos de precios. Por favor, configúrelos en el panel de administración.</p>`;
+                        loadingStateEl.innerHTML = `<p class="text-red-400">Error: No se encontraron los datos de precios. Contacte al administrador.</p>`;
                     }
                 }, (error) => {
                     console.error("Error al escuchar los datos de precios: ", error);
@@ -167,9 +152,12 @@
         }
         connectToFirestore();
     </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js');
+        });
+      }
+    </script>
 </body>
 </html>
-
-
-
-
