@@ -1,7 +1,7 @@
-const CACHE_NAME = 'price-calculator-v3'; // Versión actualizada
+const CACHE_NAME = 'price-calculator-v3';
 const urlsToCache = [
   'calculadora_precios.html',
-  'admin.html', // Añadimos la nueva página
+  'admin.html',
   'manifest.json',
   'logo.png' 
 ];
@@ -48,4 +48,3 @@ self.addEventListener('fetch', event => {
     })
   );
 });
-
