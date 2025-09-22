@@ -11,45 +11,63 @@
 <body class="bg-gray-900 text-white min-h-screen p-4 sm:p-8">
 
     <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-cyan-400">Panel de Administración de Precios</h1>
-            <p class="text-gray-400 mt-2">Modifica los valores y guarda los cambios.</p>
-        </div>
-
-        <div id="loading-state" class="text-center py-10">
-            <p class="text-cyan-400">Cargando precios desde la base de datos...</p>
-        </div>
-
-        <div id="admin-content" class="hidden">
-            <div id="prices-form" class="space-y-6">
-                <!-- Los campos del formulario se generarán aquí dinámicamente -->
+        <div id="login-container" class="max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-cyan-400 text-center">Admin Login</h1>
+            <p id="login-error" class="text-red-400 text-center h-6 mt-4"></p>
+            <div class="space-y-4 mt-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Correo Electrónico</label>
+                    <input type="email" id="email" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Contraseña</label>
+                    <input type="password" id="password" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+                </div>
+                <button id="login-button" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition">Iniciar Sesión</button>
             </div>
-            <div class="mt-8 text-center">
-                <button id="save-button" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition">Guardar Cambios</button>
-                <p id="feedback-message" class="mt-4 text-green-400 h-6"></p>
+        </div>
+
+        <div id="admin-panel" class="hidden">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-cyan-400">Panel de Administración</h1>
+                    <p class="text-gray-400 mt-2">Modifica los valores y guarda los cambios.</p>
+                </div>
+                <button id="logout-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition">Cerrar Sesión</button>
+            </div>
+
+            <div id="loading-state" class="text-center py-10">
+                <p class="text-cyan-400">Cargando precios desde la base de datos...</p>
+            </div>
+
+            <div id="admin-content" class="hidden">
+                <div id="prices-form" class="space-y-6"></div>
+                <div class="mt-8 text-center">
+                    <button id="save-button" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition">Guardar Cambios</button>
+                    <p id="feedback-message" class="mt-4 text-green-400 h-6"></p>
+                </div>
             </div>
         </div>
     </div>
 
+    <script src="/__/firebase/10.12.2/firebase-app-compat.js"></script>
+    <script src="/__/firebase/10.12.2/firebase-auth-compat.js"></script>
+    <script src="/__/firebase/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="/__/firebase/init.js"></script>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        const firebaseConfig = {
-  apiKey: "AIzaSyAFTtJkt8I3-lkqGLETx3aDcX-NYvnqpng",
-  authDomain: "bd-precios.firebaseapp.com",
-  projectId: "bd-precios",
-  storageBucket: "bd-precios.firebasestorage.app",
-  messagingSenderId: "72521816580",
-  appId: "1:72521816580:web:cbe86a5935fbbe1bbfb351",
-};
-
-// El resto del código inicializa Firebase con tus credenciales reales
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
+        // Elementos del DOM
+        const loginContainer = document.getElementById('login-container');
+        const adminPanel = document.getElementById('admin-panel');
+        const loginErrorEl = document.getElementById('login-error');
+        const emailEl = document.getElementById('email');
+        const passwordEl = document.getElementById('password');
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+        
         const loadingStateEl = document.getElementById('loading-state');
         const adminContentEl = document.getElementById('admin-content');
         const pricesFormEl = document.getElementById('prices-form');
@@ -57,7 +75,36 @@ const db = getFirestore(app);
         const feedbackMessageEl = document.getElementById('feedback-message');
         
         const defaultPrices = {'2mm':{'Rectos':11.5,'Corte_laser_simple':16.5,'Complejo':18,'Pulido_y_Brillado':1.2,'Colores':1.5},'3mm':{'Rectos':16,'Corte_laser_simple':20.5,'Complejo':23,'Pulido_y_Brillado':1.2,'Colores':1.5},'4mm':{'Rectos':18.5,'Corte_laser_simple':21,'Complejo':25,'Pulido_y_Brillado':1.2,'Colores':1.5}};
+        
+        // --- LÓGICA DE AUTENTICACIÓN ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Usuario ha iniciado sesión
+                loginContainer.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                loadPrices();
+            } else {
+                // Usuario no ha iniciado sesión
+                loginContainer.classList.remove('hidden');
+                adminPanel.classList.add('hidden');
+            }
+        });
 
+        loginButton.addEventListener('click', () => {
+            const email = emailEl.value;
+            const password = passwordEl.value;
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    loginErrorEl.textContent = "Error: Correo o contraseña incorrectos.";
+                    console.error("Error de login:", error);
+                });
+        });
+
+        logoutButton.addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // --- LÓGICA DEL PANEL DE ADMIN ---
         function renderForm(priceData) {
             pricesFormEl.innerHTML = '';
             for (const thickness in priceData) {
@@ -72,16 +119,14 @@ const db = getFirestore(app);
         
         async function loadPrices() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                else await signInAnonymously(auth);
-                const priceDocRef = doc(db, "pricing", "mainPrices");
-                const docSnap = await getDoc(priceDocRef);
+                const priceDocRef = db.collection("pricing").doc("mainPrices");
+                const docSnap = await priceDocRef.get();
                 let currentPrices;
-                if (docSnap.exists() && docSnap.data().data) {
+                if (docSnap.exists && docSnap.data().data) {
                     currentPrices = docSnap.data().data;
                 } else {
-                    feedbackMessageEl.textContent = "No se encontraron precios. Creando una tabla con datos de ejemplo.";
-                    await setDoc(priceDocRef, { data: defaultPrices });
+                    feedbackMessageEl.textContent = "No se encontraron precios. Creando tabla con datos de ejemplo.";
+                    await priceDocRef.set({ data: defaultPrices });
                     currentPrices = defaultPrices;
                 }
                 renderForm(currentPrices);
@@ -89,7 +134,7 @@ const db = getFirestore(app);
                 adminContentEl.classList.remove('hidden');
             } catch (error) {
                 console.error("Error al cargar los precios: ", error);
-                loadingStateEl.innerHTML = `<p class="text-red-400">Error al conectar con la base de datos.</p>`;
+                loadingStateEl.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
             }
         }
 
@@ -104,20 +149,25 @@ const db = getFirestore(app);
                 newPriceData[thickness][key] = parseFloat(input.value);
             });
             try {
-                const priceDocRef = doc(db, `artifacts/${appId}/public/data/pricing`, "mainPrices");
-                await setDoc(priceDocRef, { data: newPriceData });
+                // RUTA DE GUARDADO CORREGIDA
+                const priceDocRef = db.collection("pricing").doc("mainPrices");
+                await priceDocRef.set({ data: newPriceData });
                 feedbackMessageEl.textContent = '¡Precios actualizados correctamente!';
             } catch (error) {
                 console.error("Error al guardar: ", error);
-                feedbackMessageEl.textContent = 'Error al guardar los cambios.';
+                feedbackMessageEl.textContent = 'Error al guardar. ¿Tienes permiso para escribir?';
             } finally {
                 saveButton.disabled = false;
                 setTimeout(() => feedbackMessageEl.textContent = '', 3000);
             }
         });
-        loadPrices();
+    </script>
+     <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js');
+        });
+      }
     </script>
 </body>
 </html>
-
-
